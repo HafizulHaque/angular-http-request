@@ -1,25 +1,30 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable, NgModule } from "@angular/core";
-import { map } from "rxjs";
+import { map, Subject } from "rxjs";
 import { Post } from "./post.model";
 
-const DB_URL: string = 'https://angular-test-e99d3-default-rtdb.asia-southeast1.firebasedatabase.app/posts.json';
+const DB_URL: string = 'https://fir-angular-9492f-default-rtdb.asia-southeast1.firebasedatabase.app/posts.json';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PostService {
 
+  error = new Subject<Error>();
+
   constructor(
     private http: HttpClient
   ){}
 
   addPost(postData: {title: string, content: string}){
-    this.http
-      .post<{name: string}>(DB_URL, postData)
-      .subscribe(response => {
-        response ? console.log('post added successfully') : console.log('post addition failed');
-      });
+    return this.http.post<{name: string}>(DB_URL, postData).subscribe(
+      (response: any)=>{
+        console.log('post added successfully');
+      },
+      (err: Error)=>{
+        this.error.next(err);
+      }
+    )
   }
 
   getPosts(){

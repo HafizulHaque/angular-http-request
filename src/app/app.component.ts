@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { Post } from './post.model';
 import { PostService } from './post.service';
 
@@ -8,11 +9,14 @@ import { PostService } from './post.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit{
+export class AppComponent implements OnInit, OnDestroy{
   
   postForm !: FormGroup;
   loadedPosts: Post[] = [];
   fetching: boolean =  false;
+  error: any = null;
+
+  subscription !: Subscription;
 
   constructor(
     private fb: FormBuilder,
@@ -25,10 +29,14 @@ export class AppComponent implements OnInit{
       content: [null, [Validators.required]]
     })
     this.onFetch();
+
+    this.subscription = this.postService.error.subscribe((err: any)=>{
+      this.error = err;
+    })
   }
 
   onSubmit(){
-    this.postService.addPost(this.postForm.value)
+    this.postService.addPost(this.postForm.value);
     this.postForm.reset();
   }
 
@@ -38,16 +46,29 @@ export class AppComponent implements OnInit{
       .getPosts()
       .subscribe((posts: Post[])=>{
         this.loadedPosts = posts;
+        this.fetching = false;
+      }, (err: Error)=>{
+        this.error = err;
       })
-    this.fetching = false;
+    
   }
 
   onClear(){
     this.postService
     .deletePosts()
-    .subscribe(()=>{
-      this.loadedPosts = [];
-    })
+    .subscribe(
+      ()=>{
+        this.error = null;
+        this.loadedPosts = [];
+      },
+      (err: Error)=>{
+        console.log(err)
+        this.error = err;
+      }
+    )
   }
 
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+  }
 }
