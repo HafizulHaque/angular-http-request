@@ -1,0 +1,8 @@
+.row {
+  margin-top: 20px;
+}
+
+input.ng-invalid.ng-touched,
+input.ng-invalid.ng-dirty {
+  border: 1px solid red;
+}
